@@ -1,9 +1,15 @@
 import { mapResolutionToInterval, resolutionToSeconds } from './utils/utils';
 import { fetchCandles, fetchUserFillsHistory } from './fetchCandleData';
 import { bsColorSets } from '~/stores/AppSettingsStore';
+import type { UserFillIF } from '~/utils/orderbook/OrderBookIFs';
+import { useTradeDataStore } from '~/stores/TradeDataStore';
+import { ApiEndpoints, type ApiCallConfig } from '~/hooks/useInfoApi';
 
 const dataCache = new Map<string, any[]>();
-const dataCacheWithUser = new Map<string, { user: string; dataCache: any[] }>();
+const dataCacheWithUser = new Map<
+    string,
+    { user: string; dataCache: UserFillIF[] }
+>();
 
 export async function getHistoricalData(
     symbol: string,
@@ -66,7 +72,7 @@ export async function getMarkFillData(coin: string, user?: string) {
 
     if (user) {
         return await fetchUserFillsHistory(user).then((res: any) => {
-            const poolFillData: Array<any> = [];
+            const poolFillData: Array<UserFillIF> = [];
 
             if (res) {
                 res.forEach((element: any) => {

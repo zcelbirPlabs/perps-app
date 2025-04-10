@@ -1,7 +1,11 @@
+import { fillData } from '~/components/Trade/TwapTable/FillTwapTable/data';
 import { OrderHistoryLimits } from '~/utils/Constants';
-import type { OrderDataIF } from '~/utils/orderbook/OrderBookIFs';
+import type {
+    OrderDataIF,
+    UserFillIF,
+    UserFillStorageIF,
+} from '~/utils/orderbook/OrderBookIFs';
 import type { PositionIF } from '~/utils/position/PositionIFs';
-
 
 const limit = 10;
 export interface UserTradeStore {
@@ -12,55 +16,97 @@ export interface UserTradeStore {
     orderHistory: OrderDataIF[];
     addOrderToHistory: (orderHistory: OrderDataIF[]) => void;
     setOrderHistory: (orderHistory: OrderDataIF[]) => void;
-    filterOrderHistory: (orderHistory: OrderDataIF[], filterType?: string) => OrderDataIF[];
+    filterOrderHistory: (
+        orderHistory: OrderDataIF[],
+        filterType?: string,
+    ) => OrderDataIF[];
     userSymbolOrderHistory: OrderDataIF[];
     setUserSymbolOrderHistory: (userSymbolOrderHistory: OrderDataIF[]) => void;
     positions: PositionIF[];
     setPositions: (positions: PositionIF[]) => void;
+    userFill: UserFillStorageIF;
+    addUserFill: (userFill: UserFillStorageIF) => void;
+    setUserFill: (userFill: UserFillStorageIF) => void;
 }
 
-export const createUserTradesSlice = (set:any, get:any) => ({
+export const createUserTradesSlice = (set: any, get: any) => ({
     userOrders: [],
     userSymbolOrders: [],
     setUserOrders: (userOrders: OrderDataIF[]) => {
-        set({ userOrders: userOrders.slice(0, limit) })
-        get().setUserSymbolOrders(userOrders.filter(e=> e.coin === get().symbol).slice(0, limit))
+        set({ userOrders: userOrders.slice(0, limit) });
+        get().setUserSymbolOrders(
+            userOrders.filter((e) => e.coin === get().symbol).slice(0, limit),
+        );
     },
     setUserSymbolOrders: (userSymbolOrders: OrderDataIF[]) => {
-        set({ userSymbolOrders })
+        set({ userSymbolOrders });
     },
     orderHistory: [],
     addOrderToHistory: (newOrders: OrderDataIF[]) => {
-        const newOrderHistory = [...newOrders, ...get().orderHistory].slice(0, OrderHistoryLimits.MAX);
+        const newOrderHistory = [...newOrders, ...get().orderHistory].slice(
+            0,
+            OrderHistoryLimits.MAX,
+        );
         newOrderHistory.sort((a, b) => b.timestamp - a.timestamp);
-        set({userSymbolOrderHistory: [...newOrderHistory.filter(e=> e.coin === get().symbol), 
-            ...get().userSymbolOrderHistory].slice(0, OrderHistoryLimits.RENDERED)})
-        set({ orderHistory: newOrderHistory })
+        set({
+            userSymbolOrderHistory: [
+                ...newOrderHistory.filter((e) => e.coin === get().symbol),
+                ...get().userSymbolOrderHistory,
+            ].slice(0, OrderHistoryLimits.RENDERED),
+        });
+        set({ orderHistory: newOrderHistory });
     },
     setOrderHistory: (orderHistory: OrderDataIF[]) => {
-        set({ orderHistory })
-        set({ userSymbolOrderHistory: orderHistory.filter(e=> e.coin === get().symbol).slice(0, OrderHistoryLimits.RENDERED) })
+        set({ orderHistory });
+        set({
+            userSymbolOrderHistory: orderHistory
+                .filter((e) => e.coin === get().symbol)
+                .slice(0, OrderHistoryLimits.RENDERED),
+        });
     },
     filterOrderHistory: (orderHistory: OrderDataIF[], filterType?: string) => {
-        if(!filterType){
+        if (!filterType) {
             return orderHistory.slice(0, OrderHistoryLimits.RENDERED);
         }
-        switch(filterType){
+        switch (filterType) {
             case 'all':
                 return orderHistory.slice(0, OrderHistoryLimits.RENDERED);
             case 'active':
-                return get().userSymbolOrderHistory.slice(0, OrderHistoryLimits.RENDERED);
+                return get().userSymbolOrderHistory.slice(
+                    0,
+                    OrderHistoryLimits.RENDERED,
+                );
             case 'long':
-                return orderHistory.filter(e=> e.side === 'buy').slice(0, OrderHistoryLimits.RENDERED);
+                return orderHistory
+                    .filter((e) => e.side === 'buy')
+                    .slice(0, OrderHistoryLimits.RENDERED);
             case 'short':
-                return orderHistory.filter(e=> e.side === 'sell').slice(0, OrderHistoryLimits.RENDERED);
+                return orderHistory
+                    .filter((e) => e.side === 'sell')
+                    .slice(0, OrderHistoryLimits.RENDERED);
         }
     },
     positions: [],
     setPositions: (positions: PositionIF[]) => {
-        set({ positions })
+        set({ positions });
     },
     userSymbolOrderHistory: [],
-    setUserSymbolOrderHistory: (userSymbolOrderHistory: OrderDataIF[]) => set({ userSymbolOrderHistory })
-});
+    setUserSymbolOrderHistory: (userSymbolOrderHistory: OrderDataIF[]) =>
+        set({ userSymbolOrderHistory }),
 
+    userFill: {},
+    addUserFill: (newFills: UserFillIF[]) => {
+        const newUserFill = [...newFills, ...get().userFill.fillData];
+        newUserFill.sort((a, b) => b.time - a.time);
+        set({
+            userFill: {
+                userWallet: get().userFill.userWallet,
+                symbol: get().userFill.symbol,
+                fillData: newUserFill,
+            },
+        });
+    },
+    setUserFill: (userFill: UserFillStorageIF) => {
+        set({ userFill });
+    },
+});

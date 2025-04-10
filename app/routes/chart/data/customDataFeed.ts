@@ -3,7 +3,11 @@ import type {
     LibrarySymbolInfo,
     Mark,
 } from '~/tv/charting_library/charting_library';
-import { getHistoricalData, getMarkColorData, getMarkFillData } from './candleDataCache';
+import {
+    getHistoricalData,
+    getMarkColorData,
+    getMarkFillData,
+} from './candleDataCache';
 import {
     mapResolutionToInterval,
     resolutionToSecondsMiliSeconds,
@@ -11,9 +15,11 @@ import {
 } from './utils/utils';
 import { WsChannels } from '~/hooks/useWsObserver';
 import { processWSCandleMessage } from './processChartData';
+import type { UserFillIF, UserFillStorageIF } from '~/utils/orderbook/OrderBookIFs';
 
 export const createDataFeed = (
     subscribe: (channel: string, payload: any) => void,
+    userFill: UserFillStorageIF,
 ): IDatafeedChartApi =>
     ({
         searchSymbols: (userInput: string, exchange, symbolType, onResult) => {
@@ -102,7 +108,9 @@ export const createDataFeed = (
                 payload.forEach((element: any, index: number) => {
                     const isBuy = element.side === 'B';
 
-                    const markerColor = isBuy ? chartTheme.buy : chartTheme.sell;
+                    const markerColor = isBuy
+                        ? chartTheme.buy
+                        : chartTheme.sell;
 
                     const markData = {
                         id: index,
@@ -134,10 +142,13 @@ export const createDataFeed = (
                 // debugWallet.address,
             )) as any;
 
-            const fillHistory = markRes.dataCache;
+            console.log(userFill)
+            console.log(markRes)
+
+            const fillHistory = markRes.dataCache as UserFillIF[];
             // const userWallet = markRes.user;
 
-            fillHistory.sort((a: any, b: any) => b.time - a.time);
+            fillHistory.sort((a: UserFillIF, b: UserFillIF) => b.time - a.time);
 
             fillMarks(fillHistory);
 
@@ -208,4 +219,4 @@ export const createDataFeed = (
             clearInterval((window as any)[listenerGuid]);
             delete (window as any)[listenerGuid];
         },
-    } as IDatafeedChartApi);
+    }) as IDatafeedChartApi;

@@ -10,6 +10,7 @@ export type ApiCallConfig = {
 export enum ApiEndpoints {
   HISTORICAL_ORDERS = 'historicalOrders',
   OPEN_ORDERS = 'frontendOpenOrders',
+  Fill_ORDERS = 'userFills',
 }
 
 // const apiUrl = 'https://api-ui.hyperliquid.xyz/info';

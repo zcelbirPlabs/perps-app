@@ -28,6 +28,9 @@ import {
 import { useAppSettings, type colorSetIF } from '~/stores/AppSettingsStore';
 import { useDebugStore } from '~/stores/DebugStore';
 import { getMarkFillData } from '~/routes/chart/data/candleDataCache';
+import type { UserFillIF } from '~/utils/orderbook/OrderBookIFs';
+import { ApiEndpoints, useInfoApi } from '~/hooks/useInfoApi';
+import { fillData } from '~/components/Trade/TwapTable/FillTwapTable/data';
 
 interface TradingViewContextType {
     chart: IChartingLibraryWidget | null;
@@ -56,9 +59,10 @@ export const TradingViewProvider: React.FC<{ children: React.ReactNode }> = ({
     const [chart, setChart] = useState<IChartingLibraryWidget | null>(null);
 
     const { subscribe } = useWsObserver();
-    const { symbol } = useTradeDataStore();
+    const { symbol, setUserFill, userFill } = useTradeDataStore();
 
     const [chartState, setChartState] = useState<ChartLayout | null>();
+    const { fetchData } = useInfoApi();
 
     const { debugWallet } = useDebugStore();
 
@@ -136,7 +140,7 @@ export const TradingViewProvider: React.FC<{ children: React.ReactNode }> = ({
             symbol: symbol,
             fullscreen: false,
             autosize: true,
-            datafeed: createDataFeed(subscribe) as any,
+            datafeed: createDataFeed(subscribe, userFill) as any,
             interval: (chartState?.interval || '1D') as ResolutionString,
             disabled_features: [
                 'volume_force_overlay',
@@ -235,6 +239,33 @@ export const TradingViewProvider: React.FC<{ children: React.ReactNode }> = ({
                     chart.chart().clearMarks();
                     chart.chart().refreshMarks();
                 }
+            });
+        }
+    }, [debugWallet, chart, symbol]);
+
+    useEffect(() => {
+        if (debugWallet.address) {
+            const isSameUserAndSymbol =
+                userFill?.userWallet === debugWallet.address &&
+                userFill?.symbol === symbol;
+
+            if (isSameUserAndSymbol) return;
+
+            fetchData({
+                type: ApiEndpoints.Fill_ORDERS,
+                payload: { user: debugWallet.address },
+                handler: (data: UserFillIF[]) => {
+                    setUserFill({
+                        userWallet: debugWallet.address,
+                        symbol: symbol,
+                        fillData: data,
+                    });
+
+                    if (chart) {
+                        chart.chart().clearMarks();
+                        chart.chart().refreshMarks();
+                    }
+                },
             });
         }
     }, [debugWallet, chart, symbol]);
