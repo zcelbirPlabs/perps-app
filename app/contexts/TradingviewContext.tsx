@@ -5,7 +5,13 @@ import {
     type ResolutionString,
     type TradingTerminalFeatureset,
 } from '~/tv/charting_library';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, {
+    createContext,
+    useContext,
+    useState,
+    useEffect,
+    useRef,
+} from 'react';
 import { createDataFeed } from '~/routes/chart/data/customDataFeed';
 import { useWsObserver } from '~/hooks/useWsObserver';
 import { useTradeDataStore } from '~/stores/TradeDataStore';
@@ -65,6 +71,8 @@ export const TradingViewProvider: React.FC<{ children: React.ReactNode }> = ({
     const { fetchData } = useInfoApi();
 
     const { debugWallet } = useDebugStore();
+
+    const createdAt = useRef<number>(Date.now());
 
     useEffect(() => {
         const res = getChartLayout();
@@ -140,7 +148,7 @@ export const TradingViewProvider: React.FC<{ children: React.ReactNode }> = ({
             symbol: symbol,
             fullscreen: false,
             autosize: true,
-            datafeed: createDataFeed(subscribe, userFill) as any,
+            datafeed: createDataFeed(subscribe, userFill, createdAt) as any,
             interval: (chartState?.interval || '1D') as ResolutionString,
             disabled_features: [
                 'volume_force_overlay',

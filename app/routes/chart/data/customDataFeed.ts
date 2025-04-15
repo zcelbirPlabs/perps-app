@@ -15,11 +15,16 @@ import {
 } from './utils/utils';
 import { WsChannels } from '~/hooks/useWsObserver';
 import { processWSCandleMessage } from './processChartData';
-import type { UserFillIF, UserFillStorageIF } from '~/utils/orderbook/OrderBookIFs';
+import type {
+    UserFillIF,
+    UserFillStorageIF,
+} from '~/utils/orderbook/OrderBookIFs';
+import type { RefObject } from 'react';
 
 export const createDataFeed = (
     subscribe: (channel: string, payload: any) => void,
     userFill: UserFillStorageIF,
+    createdAt: RefObject<number>,
 ): IDatafeedChartApi =>
     ({
         searchSymbols: (userInput: string, exchange, symbolType, onResult) => {
@@ -97,6 +102,8 @@ export const createDataFeed = (
         },
 
         getMarks: async (symbolInfo, from, to, onDataCallback, resolution) => {
+            console.log(symbolInfo);
+
             const bSideOrderHistoryMarks: Map<string, Mark> = new Map();
             const aSideOrderHistoryMarks: Map<string, Mark> = new Map();
 
@@ -142,8 +149,7 @@ export const createDataFeed = (
                 // debugWallet.address,
             )) as any;
 
-            console.log(userFill)
-            console.log(markRes)
+            // console.log(createdAt, userFill);
 
             const fillHistory = markRes.dataCache as UserFillIF[];
             // const userWallet = markRes.user;
