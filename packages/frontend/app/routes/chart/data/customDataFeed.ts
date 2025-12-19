@@ -38,6 +38,11 @@ export type CustomDataFeedType = IDatafeedChartApi & {
 export const createDataFeed = (
     info: Info | null,
     addToFetchedChannels: (channel: string) => void,
+    createLog: any,
+    markResolved: any,
+    markRejected: any,
+    markNoData: any,
+    getCaller: any,
 ): CustomDataFeedType => {
     let currentUserAddress = '';
     // Keep track of user fills subscription separately since it's not tied to a listenerGuid
@@ -125,6 +130,22 @@ export const createDataFeed = (
                 return;
             }
 
+            const isInitialExist = getCaller('Initial Fetch');
+
+            const fetcherLogId = createLog({
+                domain: { fromMs: from, toMs: to },
+                poolInfo: {
+                    symbol: symbol,
+                    period: resolution,
+                    platform: 'Perps',
+                },
+                caller: periodParams.firstDataRequest
+                    ? isInitialExist
+                        ? 'Period Change'
+                        : 'Initial Fetch'
+                    : 'Domain Change',
+            });
+
             try {
                 const bars = await getHistoricalData(
                     symbol,
@@ -138,9 +159,21 @@ export const createDataFeed = (
                     return;
                 }
 
+                if (bars.length === 0) {
+                    markNoData(fetcherLogId);
+                } else {
+                    markResolved(
+                        fetcherLogId,
+                        bars.length,
+                        bars[0].time,
+                        bars[bars.length - 1].time,
+                    );
+                }
+
                 onResult(bars, { noData: bars.length === 0 });
             } catch (error) {
                 console.error('Error loading historical data:', error);
+                markRejected(fetcherLogId, error);
                 onError('Error loading historical data');
             }
         },

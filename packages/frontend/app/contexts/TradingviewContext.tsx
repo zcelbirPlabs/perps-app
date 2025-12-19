@@ -56,6 +56,7 @@ import type {
 import { processSymbolUrlParam } from '~/utils/AppUtils';
 
 import i18n from 'i18next';
+import { useCandleLogStore } from '~/stores/CandleFetchLogStore';
 
 interface TradingViewContextType {
     chart: IChartingLibraryWidget | null;
@@ -108,6 +109,12 @@ export const TradingViewProvider: React.FC<{
     const [chartInterval, setChartInterval] = useState<string | undefined>(
         chartState?.interval,
     );
+
+    const createLog = useCandleLogStore((state) => state.createLog);
+    const markResolved = useCandleLogStore((state) => state.markResolved);
+    const markRejected = useCandleLogStore((state) => state.markRejected);
+    const markNoData = useCandleLogStore((state) => state.markNoData);
+    const getCaller = useCandleLogStore((state) => state.getCaller);
 
     const dataFeedRef = useRef<CustomDataFeedType | null>(null);
 
@@ -357,7 +364,15 @@ export const TradingViewProvider: React.FC<{
 
         if (!info || !tradingviewLib?.widget) return;
 
-        dataFeedRef.current = createDataFeed(info, addToFetchedChannels);
+        dataFeedRef.current = createDataFeed(
+            info,
+            addToFetchedChannels,
+            createLog,
+            markResolved,
+            markRejected,
+            markNoData,
+            getCaller,
+        );
 
         const currentMarketId = marketIdRef.current;
         const processedSymbol = processSymbolUrlParam(currentMarketId || 'BTC');
