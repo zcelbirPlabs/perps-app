@@ -16,6 +16,7 @@ import styles from './ComboBox.module.css';
 import Tooltip from '~/components/Tooltip/Tooltip';
 import { PublicKey } from '@solana/web3.js';
 import { HorizontalScrollable } from '~/components/Wrappers/HorizontanScrollable/HorizontalScrollable';
+import { useCandleLogStore } from '~/stores/CandleFetchLogStore';
 
 export default function ComboBoxContainer() {
     const { symbol, selectedCurrency, setSelectedCurrency } =
@@ -49,6 +50,10 @@ export default function ComboBoxContainer() {
         mockMinimumLeverage,
         setMockMinimumLeverage,
     } = useDebugStore();
+
+    const downloadLogsAsCSV = useCandleLogStore(
+        (state) => state.downloadLogsAsCSV,
+    );
 
     const currencies = ['USD', 'BTC', 'ETH'];
 
@@ -256,6 +261,15 @@ export default function ComboBoxContainer() {
                                     </div>
                                 </Tooltip>
                             )}
+
+                            <Tooltip content='Logger'>
+                                <div
+                                    className={`${styles.sdkToggle} ${styles.active}`}
+                                    onClick={() => downloadLogsAsCSV()}
+                                >
+                                    Download Candle Logs
+                                </div>
+                            </Tooltip>
                         </div>
                     )}
 
